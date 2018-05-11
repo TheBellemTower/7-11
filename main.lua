@@ -47,7 +47,22 @@ local sheetOptionsJump =
     height = 483,
     numFrames = 10
 }
-local sheetRunNinja = graphics.newImageSheet( "./assets/spritesheets/ninjaBoyJump.png", sheetOptionsJump )
+local sheetJumpNinja = graphics.newImageSheet( "./assets/spritesheets/ninjaBoyJump.png", sheetOptionsJump )
+
+local sheetOptionsIdle2 =
+{
+    width = 290,
+    height = 500,
+    numFrames = 10
+}
+local sheetIdleGNinja = graphics.newImageSheet( "./assets/spritesheets/ninjaGirlIdle.png", sheetOptionsIdle2 )
+local sheetOptionsDie =
+{
+    width = 578,
+    height = 599,
+    numFrames = 10
+}
+local sheetDieGNinja = graphics.newImageSheet( "./assets/spritesheets/ninjaGirlDead.png", sheetOptionsDie )
 
 
 local sequence_data = {
@@ -77,13 +92,31 @@ local sequence_data = {
         sheet = sheetRunNinja
     }, 
     {
+        name = "idle2",
+        start = 1,
+        count = 10,
+        time = 800,
+        loopCount = 0,
+        sheet = sheetIdleGNinja
+    },
+    {
         name = "jump",
         start = 1,
         count = 10,
         time = 800,
-        loopCount = 1,
+        loopCount = 1.5,
         sheet = sheetJumpNinja
-    }
+    },
+     {
+        name = "die",
+        start = 1,
+        count = 10,
+        time = 800,
+        loopCount = 1.5,
+        sheet = sheetDieGNinja
+    },
+
+
 }
 
 local theCharacter = display.newSprite( sheetIdleNinja, sequence_data )
@@ -98,6 +131,20 @@ physics.addBody( theCharacter, "dynamic", {
 theCharacter.isFixedRotation = true
 theCharacter:setSequence( "idle")
 theCharacter:play()
+
+local theCharacter2 = display.newSprite( sheetIdleGNinja, sequence_data )
+theCharacter2.x = display.contentCenterX + 900
+theCharacter2.y = 900
+theCharacter2.id = "bad character"
+physics.addBody( theCharacter2, "dynamic", { 
+    density = 3.0, 
+    friction = 0.3, 
+    bounce = .3
+    } )
+theCharacter2.xScale = -1
+theCharacter2.isFixedRotation = true
+theCharacter2:setSequence( "idle2")
+theCharacter2:play()
 
 local playerBullets = {} -- Table that holds the players Bullets
 
@@ -132,16 +179,7 @@ physics.addBody( Ground, "static", {
     } )
 
 
-local theCharacter2 = display.newImage( "./assets/sprites/ninjaG.png" )
-theCharacter2.x = display.contentCenterX 
-theCharacter2.y = 900
-theCharacter2.id = "bad character"
-physics.addBody( theCharacter2, "dynamic", { 
-    density = 3.0, 
-    friction = 0.3, 
-    bounce = .3
-    } )
-theCharacter2.isFixedRotation = true
+
 
 local dPad = display.newImage( "./assets/sprites/d-pad.png" )
 dPad.x = 150
@@ -219,9 +257,6 @@ local function onCollision( event )
 
         if ( ( obj1.id == "bad character" and obj2.id == "bullet" ) or
              ( obj1.id == "bullet" and obj2.id == "bad character" ) ) then
-            -- Remove both the laser and asteroid
-            display.remove( obj1 )
-            display.remove( obj2 )
             
             -- remove the bullet
             local bulletCounter = nil
@@ -231,13 +266,22 @@ local function onCollision( event )
                     playerBullets[bulletCounter]:removeSelf()
                     playerBullets[bulletCounter] = nil
                     table.remove( playerBullets, bulletCounter )
+
                     break
                 end
             end
 
+            theCharacter2:setSequence( "die")
+            theCharacter2:play()
+
             --remove character
-            theCharacter2:removeSelf()
-            theCharacter2 = nil
+           function corpseRemoval( event )
+                -- delays removal of corpse
+                theCharacter2:removeSelf()
+                theCharacter2 = nil
+            end 
+
+            timer.performWithDelay( 3000, corpseRemoval)
 
             -- Increase score
             print ("you could increase a score here.")
@@ -282,6 +326,7 @@ local function onCollision( event )
         end
     end
 end
+
 
 
 
